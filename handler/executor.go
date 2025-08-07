@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/anthropics/claude-code-hooks-go-sdk/types"
@@ -30,14 +29,14 @@ type SyncExecutor struct{}
 
 func (e *SyncExecutor) Execute(ctx context.Context, input types.HookInput, eventName types.EventName, handlers []Handler) ([]HandlerResult, error) {
 	results := make([]HandlerResult, 0, len(handlers))
-	
+
 	for i, handler := range handlers {
 		select {
 		case <-ctx.Done():
 			return results, ctx.Err()
 		default:
 		}
-		
+
 		output, err := handler.HandleEvent(input, eventName)
 		result := HandlerResult{
 			Output: output,
@@ -45,18 +44,18 @@ func (e *SyncExecutor) Execute(ctx context.Context, input types.HookInput, event
 			Index:  i,
 		}
 		results = append(results, result)
-		
+
 		// Stop on first error in sync mode
 		if err != nil {
 			return results, err
 		}
-		
+
 		// Check if this handler blocked the operation
 		if output != nil && isBlocking(output) {
 			return results, nil
 		}
 	}
-	
+
 	return results, nil
 }
 
@@ -66,15 +65,15 @@ func (e *AsyncExecutor) Execute(ctx context.Context, input types.HookInput, even
 	if len(handlers) == 0 {
 		return nil, nil
 	}
-	
+
 	results := make([]HandlerResult, len(handlers))
 	var wg sync.WaitGroup
-	
+
 	for i, handler := range handlers {
 		wg.Add(1)
 		go func(index int, h Handler) {
 			defer wg.Done()
-			
+
 			output, err := h.HandleEvent(input, eventName)
 			results[index] = HandlerResult{
 				Output: output,
@@ -83,13 +82,13 @@ func (e *AsyncExecutor) Execute(ctx context.Context, input types.HookInput, even
 			}
 		}(i, handler)
 	}
-	
+
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()
 		close(done)
 	}()
-	
+
 	select {
 	case <-ctx.Done():
 		return results, ctx.Err()
@@ -104,17 +103,17 @@ func (e *PipelineExecutor) Execute(ctx context.Context, input types.HookInput, e
 	if len(handlers) == 0 {
 		return nil, nil
 	}
-	
+
 	results := make([]HandlerResult, 0, len(handlers))
 	currentInput := input
-	
+
 	for i, handler := range handlers {
 		select {
 		case <-ctx.Done():
 			return results, ctx.Err()
 		default:
 		}
-		
+
 		output, err := handler.HandleEvent(currentInput, eventName)
 		result := HandlerResult{
 			Output: output,
@@ -122,19 +121,19 @@ func (e *PipelineExecutor) Execute(ctx context.Context, input types.HookInput, e
 			Index:  i,
 		}
 		results = append(results, result)
-		
+
 		if err != nil {
 			return results, err
 		}
-		
-		// In pipeline mode, we don't chain outputs to inputs since 
+
+		// In pipeline mode, we don't chain outputs to inputs since
 		// each event type has specific input/output types
 		// Pipeline is mainly useful for middleware-style processing
 		if output != nil && isBlocking(output) {
 			return results, nil
 		}
 	}
-	
+
 	return results, nil
 }
 
