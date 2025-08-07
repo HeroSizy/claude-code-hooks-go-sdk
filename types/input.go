@@ -13,13 +13,13 @@ type BaseInput struct {
 
 type PreToolUseInput struct {
 	BaseInput
-	ToolName  string                 `json:"tool_name"`
+	ToolName  ToolName               `json:"tool_name"`
 	ToolInput map[string]interface{} `json:"tool_input"`
 }
 
 type PostToolUseInput struct {
 	BaseInput
-	ToolName     string                 `json:"tool_name"`
+	ToolName     ToolName               `json:"tool_name"`
 	ToolInput    map[string]interface{} `json:"tool_input"`
 	ToolResponse interface{}            `json:"tool_response"`
 }
@@ -46,13 +46,13 @@ type SubagentStopInput struct {
 
 type PreCompactInput struct {
 	BaseInput
-	Trigger            string `json:"trigger"`
-	CustomInstructions string `json:"custom_instructions"`
+	Trigger            CompactTrigger `json:"trigger"`
+	CustomInstructions string         `json:"custom_instructions"`
 }
 
 type SessionStartInput struct {
 	BaseInput
-	Source string `json:"source"`
+	Source SessionSource `json:"source"`
 }
 
 type HookInput interface {

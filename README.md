@@ -70,7 +70,7 @@ Triggered before Claude Code executes a tool.
 ```go
 func (h *MyHandler) HandlePreToolUse(input types.PreToolUseInput) (types.PreToolUseOutput, error) {
     // Block dangerous commands
-    if input.ToolName == "Bash" {
+    if input.ToolName == types.ToolBash {
         if cmd, ok := input.ToolInput["command"].(string); ok {
             if strings.Contains(cmd, "rm -rf") {
                 allowTool := false
@@ -218,13 +218,34 @@ All hook inputs contain common fields:
 - `HookEventName`: The event type name
 
 Event-specific fields:
-- **PreToolUse**: `ToolName`, `ToolInput`
-- **PostToolUse**: `ToolName`, `ToolInput`, `ToolResponse`
+- **PreToolUse**: `ToolName` (ToolName enum), `ToolInput`
+- **PostToolUse**: `ToolName` (ToolName enum), `ToolInput`, `ToolResponse`
 - **UserPromptSubmit**: `Prompt`
 - **Stop/SubagentStop**: `StopHookActive`
 - **Notification**: `Message`
-- **PreCompact**: `Trigger`, `CustomInstructions`
-- **SessionStart**: `Source`
+- **PreCompact**: `Trigger` (CompactTrigger enum), `CustomInstructions`
+- **SessionStart**: `Source` (SessionSource enum)
+
+## Enums
+
+The SDK provides typed enums for predefined values:
+
+### Tool Names
+```go
+types.ToolTask, types.ToolBash, types.ToolGlob, types.ToolGrep, 
+types.ToolRead, types.ToolEdit, types.ToolMultiEdit, types.ToolWrite, 
+types.ToolWebFetch, types.ToolWebSearch
+```
+
+### Compact Triggers
+```go
+types.CompactTriggerManual, types.CompactTriggerAuto
+```
+
+### Session Sources
+```go
+types.SessionSourceStartup, types.SessionSourceResume, types.SessionSourceClear
+```
 
 ## Testing Hooks
 

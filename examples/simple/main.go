@@ -13,7 +13,7 @@ type ExampleHandler struct{}
 func (h *ExampleHandler) HandlePreToolUse(input types.PreToolUseInput) (types.PreToolUseOutput, error) {
 	log.Printf("PreToolUse: Tool=%s", input.ToolName)
 	
-	if input.ToolName == "Bash" {
+	if input.ToolName == types.ToolBash {
 		log.Printf("Bash command detected in session %s", input.SessionID)
 	}
 	
