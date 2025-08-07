@@ -53,14 +53,14 @@ func (h *ExampleHandler) HandleStop(input types.StopInput) (types.StopOutput, er
 func main() {
 	h := &ExampleHandler{}
 	
-	multiHandler := &handler.MultiHandler{
-		PreToolUseHandler:        h,
-		PostToolUseHandler:       h,
-		UserPromptSubmitHandler:  h,
-		StopHandler:              h,
-	}
+	// New multi-handler API - single handler for multiple events
+	router := handler.NewRouter().
+		OnPreToolUse(h).
+		OnPostToolUse(h).
+		OnUserPromptSubmit(h).
+		OnStop(h)
 	
-	handler.Execute(multiHandler)
+	handler.Execute(router)
 }
 
 func stringPtr(s string) *string {

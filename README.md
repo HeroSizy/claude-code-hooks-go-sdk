@@ -30,10 +30,11 @@ func (h *MyHandler) HandlePreToolUse(input types.PreToolUseInput) (types.PreTool
 
 func main() {
     h := &MyHandler{}
-    multiHandler := &handler.MultiHandler{
-        PreToolUseHandler: h,
-    }
-    handler.Execute(multiHandler)
+    
+    router := handler.NewRouter().
+        OnPreToolUse(h)
+    
+    handler.Execute(router)
 }
 ```
 
@@ -127,32 +128,119 @@ func (h *MyHandler) HandleUserPromptSubmit(input types.UserPromptSubmitInput) (t
 - **PreCompact**: Before transcript compaction
 - **SessionStart**: New session initialization
 
-## Handler Patterns
+## Multi-Handler Patterns
 
-### Multi-Handler Pattern
+### Single Handler, Multiple Events
 Handle multiple event types with one struct:
 
 ```go
 type MyHandler struct{}
 
 func (h *MyHandler) HandlePreToolUse(input types.PreToolUseInput) (types.PreToolUseOutput, error) {
-    // Handle PreToolUse
+    log.Printf("PreToolUse: %s", input.ToolName)
     return types.PreToolUseOutput{}, nil
 }
 
 func (h *MyHandler) HandlePostToolUse(input types.PostToolUseInput) (types.PostToolUseOutput, error) {
-    // Handle PostToolUse  
+    log.Printf("PostToolUse: %s", input.ToolName)
     return types.PostToolUseOutput{}, nil
 }
 
 func main() {
     h := &MyHandler{}
-    multiHandler := &handler.MultiHandler{
-        PreToolUseHandler:  h,
-        PostToolUseHandler: h,
-    }
-    handler.Execute(multiHandler)
+    
+    router := handler.NewRouter().
+        OnPreToolUse(h).
+        OnPostToolUse(h)
+    
+    handler.Execute(router)
 }
+```
+
+### Multiple Handlers, Single Event
+Run multiple handlers for the same event:
+
+```go
+type SecurityHandler struct{}
+func (h *SecurityHandler) HandlePreToolUse(input types.PreToolUseInput) (types.PreToolUseOutput, error) {
+    // Security checks
+    return types.PreToolUseOutput{}, nil
+}
+
+type AuditHandler struct{}  
+func (h *AuditHandler) HandlePreToolUse(input types.PreToolUseInput) (types.PreToolUseOutput, error) {
+    // Audit logging
+    return types.PreToolUseOutput{}, nil
+}
+
+func main() {
+    router := handler.NewRouter().
+        OnPreToolUse(
+            &SecurityHandler{},    // Runs first (sync mode)
+            &AuditHandler{},       // Runs second
+        ).
+        WithExecution(handler.ExecutionModeSync).
+        WithResolution(handler.ResolutionModeBlockAny)
+    
+    handler.Execute(router)
+}
+```
+
+### Execution Modes
+
+#### Synchronous Execution (Default)
+Handlers run sequentially, stopping on first block/error:
+
+```go
+router := handler.NewRouter().
+    OnPreToolUse(handler1, handler2, handler3).
+    WithExecution(handler.ExecutionModeSync)     // Default
+```
+
+#### Asynchronous Execution  
+Handlers run concurrently, results combined at the end:
+
+```go
+router := handler.NewRouter().
+    OnPreToolUse(handler1, handler2, handler3).
+    WithExecution(handler.ExecutionModeAsync).
+    WithTimeout(10 * time.Second)
+```
+
+#### Pipeline Execution
+Handlers run sequentially (useful for middleware-style processing):
+
+```go
+router := handler.NewRouter().
+    OnPreToolUse(
+        inputValidator,    // Validates input
+        policyChecker,     // Checks policies  
+        auditLogger,       // Logs decision
+    ).
+    WithExecution(handler.ExecutionModePipeline)
+```
+
+### Result Resolution Strategies
+
+#### BlockAny (Default)
+Block operation if any handler blocks:
+
+```go
+router.WithResolution(handler.ResolutionModeBlockAny)  // Default
+```
+
+#### FirstWin  
+Use result from first successful handler:
+
+```go
+router.WithResolution(handler.ResolutionModeFirstWin)
+```
+
+#### Merge
+Combine compatible results from all handlers:
+
+```go
+router.WithResolution(handler.ResolutionModeMerge)
 ```
 
 ### Function Handler Pattern
@@ -165,10 +253,6 @@ func myHookHandler(input types.HookInput, eventName types.EventName) (types.Hook
         preInput := input.(types.PreToolUseInput)
         log.Printf("PreToolUse: %s", preInput.ToolName)
         return types.PreToolUseOutput{}, nil
-    case types.EventPostToolUse:
-        postInput := input.(types.PostToolUseInput)
-        log.Printf("PostToolUse: %s", postInput.ToolName)
-        return types.PostToolUseOutput{}, nil
     default:
         return types.Success(), nil
     }
@@ -254,8 +338,7 @@ Use the router's `Process` method for testing:
 ```go
 func TestMyHook(t *testing.T) {
     h := &MyHandler{}
-    multiHandler := &handler.MultiHandler{PreToolUseHandler: h}
-    router := handler.NewRouter(multiHandler)
+    router := handler.NewRouter().OnPreToolUse(h)
     
     input := `{
         "session_id": "test-session",
@@ -269,6 +352,21 @@ func TestMyHook(t *testing.T) {
     output, err := router.Process([]byte(input))
     assert.NoError(t, err)
     assert.NotNil(t, output)
+}
+
+func TestMultipleHandlers(t *testing.T) {
+    securityHandler := &SecurityHandler{}
+    auditHandler := &AuditHandler{}
+    
+    router := handler.NewRouter().
+        OnPreToolUse(securityHandler, auditHandler).
+        WithExecution(handler.ExecutionModeAsync).
+        WithTimeout(5 * time.Second)
+    
+    // Test that both handlers are called
+    output, err := router.Process([]byte(input))
+    assert.NoError(t, err)
+    assert.Equal(t, types.ExitSuccess, output.ExitWith())
 }
 ```
 

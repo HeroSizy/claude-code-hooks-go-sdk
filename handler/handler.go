@@ -40,65 +40,66 @@ type SessionStartHandler interface {
 	HandleSessionStart(input types.SessionStartInput) (types.SessionStartOutput, error)
 }
 
-type MultiHandler struct {
-	PreToolUseHandler     PreToolUseHandler
-	PostToolUseHandler    PostToolUseHandler
-	NotificationHandler   NotificationHandler
-	UserPromptSubmitHandler UserPromptSubmitHandler
-	StopHandler           StopHandler
-	SubagentStopHandler   SubagentStopHandler
-	PreCompactHandler     PreCompactHandler
-	SessionStartHandler   SessionStartHandler
+// HandlerAdapter wraps specific handler interfaces to implement the general Handler interface
+type HandlerAdapter struct {
+	PreToolUse       PreToolUseHandler
+	PostToolUse      PostToolUseHandler
+	Notification     NotificationHandler
+	UserPromptSubmit UserPromptSubmitHandler
+	Stop             StopHandler
+	SubagentStop     SubagentStopHandler
+	PreCompact       PreCompactHandler
+	SessionStart     SessionStartHandler
 }
 
-func (m *MultiHandler) HandleEvent(input types.HookInput, eventName types.EventName) (types.HookOutput, error) {
+func (h *HandlerAdapter) HandleEvent(input types.HookInput, eventName types.EventName) (types.HookOutput, error) {
 	switch eventName {
 	case types.EventPreToolUse:
-		if m.PreToolUseHandler != nil {
+		if h.PreToolUse != nil {
 			if preInput, ok := input.(types.PreToolUseInput); ok {
-				return m.PreToolUseHandler.HandlePreToolUse(preInput)
+				return h.PreToolUse.HandlePreToolUse(preInput)
 			}
 		}
 	case types.EventPostToolUse:
-		if m.PostToolUseHandler != nil {
+		if h.PostToolUse != nil {
 			if postInput, ok := input.(types.PostToolUseInput); ok {
-				return m.PostToolUseHandler.HandlePostToolUse(postInput)
+				return h.PostToolUse.HandlePostToolUse(postInput)
 			}
 		}
 	case types.EventNotification:
-		if m.NotificationHandler != nil {
+		if h.Notification != nil {
 			if notifInput, ok := input.(types.NotificationInput); ok {
-				return m.NotificationHandler.HandleNotification(notifInput)
+				return h.Notification.HandleNotification(notifInput)
 			}
 		}
 	case types.EventUserPromptSubmit:
-		if m.UserPromptSubmitHandler != nil {
+		if h.UserPromptSubmit != nil {
 			if promptInput, ok := input.(types.UserPromptSubmitInput); ok {
-				return m.UserPromptSubmitHandler.HandleUserPromptSubmit(promptInput)
+				return h.UserPromptSubmit.HandleUserPromptSubmit(promptInput)
 			}
 		}
 	case types.EventStop:
-		if m.StopHandler != nil {
+		if h.Stop != nil {
 			if stopInput, ok := input.(types.StopInput); ok {
-				return m.StopHandler.HandleStop(stopInput)
+				return h.Stop.HandleStop(stopInput)
 			}
 		}
 	case types.EventSubagentStop:
-		if m.SubagentStopHandler != nil {
+		if h.SubagentStop != nil {
 			if subStopInput, ok := input.(types.SubagentStopInput); ok {
-				return m.SubagentStopHandler.HandleSubagentStop(subStopInput)
+				return h.SubagentStop.HandleSubagentStop(subStopInput)
 			}
 		}
 	case types.EventPreCompact:
-		if m.PreCompactHandler != nil {
+		if h.PreCompact != nil {
 			if compactInput, ok := input.(types.PreCompactInput); ok {
-				return m.PreCompactHandler.HandlePreCompact(compactInput)
+				return h.PreCompact.HandlePreCompact(compactInput)
 			}
 		}
 	case types.EventSessionStart:
-		if m.SessionStartHandler != nil {
+		if h.SessionStart != nil {
 			if sessionInput, ok := input.(types.SessionStartInput); ok {
-				return m.SessionStartHandler.HandleSessionStart(sessionInput)
+				return h.SessionStart.HandleSessionStart(sessionInput)
 			}
 		}
 	}
@@ -106,8 +107,35 @@ func (m *MultiHandler) HandleEvent(input types.HookInput, eventName types.EventN
 	return types.Success(), nil
 }
 
-type FuncHandler func(input types.HookInput, eventName types.EventName) (types.HookOutput, error)
+// Adapter functions to wrap specific handlers as general Handler
+func AdaptPreToolUse(h PreToolUseHandler) Handler {
+	return &HandlerAdapter{PreToolUse: h}
+}
 
-func (f FuncHandler) HandleEvent(input types.HookInput, eventName types.EventName) (types.HookOutput, error) {
-	return f(input, eventName)
+func AdaptPostToolUse(h PostToolUseHandler) Handler {
+	return &HandlerAdapter{PostToolUse: h}
+}
+
+func AdaptNotification(h NotificationHandler) Handler {
+	return &HandlerAdapter{Notification: h}
+}
+
+func AdaptUserPromptSubmit(h UserPromptSubmitHandler) Handler {
+	return &HandlerAdapter{UserPromptSubmit: h}
+}
+
+func AdaptStop(h StopHandler) Handler {
+	return &HandlerAdapter{Stop: h}
+}
+
+func AdaptSubagentStop(h SubagentStopHandler) Handler {
+	return &HandlerAdapter{SubagentStop: h}
+}
+
+func AdaptPreCompact(h PreCompactHandler) Handler {
+	return &HandlerAdapter{PreCompact: h}
+}
+
+func AdaptSessionStart(h SessionStartHandler) Handler {
+	return &HandlerAdapter{SessionStart: h}
 }
