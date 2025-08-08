@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/anthropics/claude-code-hooks-go-sdk/types"
+	"github.com/HeroSizy/claude-code-hooks-go-sdk/types"
 )
 
 type RouterConfig struct {
@@ -177,7 +177,7 @@ func Execute(router *Router) {
 // Simple single handler execution (backward compatibility helper)
 func ExecuteSingle(handler Handler) {
 	router := NewRouter()
-	
+
 	// Register the single handler for all events it supports
 	if h, ok := handler.(PreToolUseHandler); ok {
 		router.OnPreToolUse(h)
@@ -203,7 +203,7 @@ func ExecuteSingle(handler Handler) {
 	if h, ok := handler.(SessionStartHandler); ok {
 		router.OnSessionStart(h)
 	}
-	
+
 	Execute(router)
 }
 

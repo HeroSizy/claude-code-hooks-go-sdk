@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/anthropics/claude-code-hooks-go-sdk/types"
+	"github.com/HeroSizy/claude-code-hooks-go-sdk/types"
 )
 
 type Handler interface {
@@ -103,7 +103,7 @@ func (h *HandlerAdapter) HandleEvent(input types.HookInput, eventName types.Even
 			}
 		}
 	}
-	
+
 	return types.Success(), nil
 }
 

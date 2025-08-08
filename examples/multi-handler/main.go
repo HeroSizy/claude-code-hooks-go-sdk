@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthropics/claude-code-hooks-go-sdk/handler"
-	"github.com/anthropics/claude-code-hooks-go-sdk/types"
+	"github.com/HeroSizy/claude-code-hooks-go-sdk/handler"
+	"github.com/HeroSizy/claude-code-hooks-go-sdk/types"
 )
 
 type SecurityHandler struct{}
 
 func (h *SecurityHandler) HandlePreToolUse(input types.PreToolUseInput) (types.PreToolUseOutput, error) {
 	log.Printf("[SECURITY] Checking tool: %s", input.ToolName)
-	
+
 	// Block dangerous bash commands
 	if input.ToolName == types.ToolBash {
 		if cmd, ok := input.ToolInput["command"].(string); ok {
@@ -34,7 +34,7 @@ func (h *SecurityHandler) HandlePreToolUse(input types.PreToolUseInput) (types.P
 			}
 		}
 	}
-	
+
 	log.Printf("[SECURITY] Tool %s approved", input.ToolName)
 	return types.PreToolUseOutput{}, nil
 }
@@ -67,11 +67,11 @@ type ContentFilterHandler struct{}
 
 func (h *ContentFilterHandler) HandleUserPromptSubmit(input types.UserPromptSubmitInput) (types.UserPromptSubmitOutput, error) {
 	log.Printf("[FILTER] Checking prompt content")
-	
+
 	// Block prompts with sensitive content
 	blocked := []string{"password", "secret", "private key", "ssn", "credit card"}
 	prompt := strings.ToLower(input.Prompt)
-	
+
 	for _, word := range blocked {
 		if strings.Contains(prompt, word) {
 			continueVal := false
@@ -85,35 +85,35 @@ func (h *ContentFilterHandler) HandleUserPromptSubmit(input types.UserPromptSubm
 			}, nil
 		}
 	}
-	
+
 	log.Printf("[FILTER] Prompt approved")
 	return types.UserPromptSubmitOutput{}, nil
 }
 
 func demonstrateSyncExecution() {
 	log.Println("=== SYNC EXECUTION DEMO ===")
-	
+
 	router := handler.NewRouter().
 		OnPreToolUse(
-			&SecurityHandler{},    // Runs first
-			&AuditHandler{},       // Runs second  
-			&MetricsHandler{},     // Runs third
+			&SecurityHandler{}, // Runs first
+			&AuditHandler{},    // Runs second
+			&MetricsHandler{},  // Runs third
 		).
 		WithExecution(handler.ExecutionModeSync).
 		WithResolution(handler.ResolutionModeBlockAny)
-	
+
 	log.Println("Configured sync execution with BlockAny resolution")
 	handler.Execute(router)
 }
 
 func demonstrateAsyncExecution() {
 	log.Println("=== ASYNC EXECUTION DEMO ===")
-	
+
 	router := handler.NewRouter().
 		OnPreToolUse(
-			&SecurityHandler{},    // Runs concurrently
-			&AuditHandler{},       // Runs concurrently
-			&MetricsHandler{},     // Runs concurrently
+			&SecurityHandler{}, // Runs concurrently
+			&AuditHandler{},    // Runs concurrently
+			&MetricsHandler{},  // Runs concurrently
 		).
 		OnPostToolUse(
 			&AuditHandler{},
@@ -122,14 +122,14 @@ func demonstrateAsyncExecution() {
 		WithExecution(handler.ExecutionModeAsync).
 		WithResolution(handler.ResolutionModeBlockAny).
 		WithTimeout(10 * time.Second)
-	
+
 	log.Println("Configured async execution with 10s timeout")
 	handler.Execute(router)
 }
 
 func demonstrateMixedHandlers() {
 	log.Println("=== MIXED HANDLERS DEMO ===")
-	
+
 	router := handler.NewRouter().
 		OnPreToolUse(
 			&SecurityHandler{},
@@ -143,7 +143,7 @@ func demonstrateMixedHandlers() {
 		).
 		WithExecution(handler.ExecutionModeSync).
 		WithResolution(handler.ResolutionModeFirstWin)
-	
+
 	log.Println("Configured multiple event types with FirstWin resolution")
 	handler.Execute(router)
 }
@@ -151,7 +151,7 @@ func demonstrateMixedHandlers() {
 func main() {
 	// Choose demo based on environment variable or default to sync
 	demo := "sync" // Could read from os.Getenv("DEMO_MODE")
-	
+
 	switch demo {
 	case "async":
 		demonstrateAsyncExecution()

@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/anthropics/claude-code-hooks-go-sdk/types"
+	"github.com/HeroSizy/claude-code-hooks-go-sdk/types"
 )
 
 type ExecutionMode int
