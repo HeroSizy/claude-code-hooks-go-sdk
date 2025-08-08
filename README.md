@@ -1,11 +1,17 @@
 # Claude Code Hooks Go SDK
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/HeroSizy/claude-code-hooks-go-sdk.svg)](https://pkg.go.dev/github.com/HeroSizy/claude-code-hooks-go-sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Report Card](https://goreportcard.com/badge/github.com/HeroSizy/claude-code-hooks-go-sdk)](https://goreportcard.com/report/github.com/HeroSizy/claude-code-hooks-go-sdk)
+[![CI](https://github.com/HeroSizy/claude-code-hooks-go-sdk/actions/workflows/ci.yaml/badge.svg)](https://github.com/HeroSizy/claude-code-hooks-go-sdk/actions/workflows/ci.yaml)
+[![Release](https://img.shields.io/github/v/release/HeroSizy/claude-code-hooks-go-sdk?sort=semver&color=blue)](https://github.com/HeroSizy/claude-code-hooks-go-sdk/releases/latest)
+
 A production-ready Go SDK for building [Claude Code hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) with type-safe, idiomatic Go interfaces.
 
 ## Installation
 
 ```bash
-go get github.com/anthropics/claude-code-hooks-go-sdk
+go get github.com/HeroSizy/claude-code-hooks-go-sdk
 ```
 
 ## Quick Start
@@ -17,8 +23,8 @@ package main
 
 import (
     "log"
-    "github.com/anthropics/claude-code-hooks-go-sdk/handler"
-    "github.com/anthropics/claude-code-hooks-go-sdk/types"
+    "github.com/HeroSizy/claude-code-hooks-go-sdk/handler"
+    "github.com/HeroSizy/claude-code-hooks-go-sdk/types"
 )
 
 type MyHandler struct{}
